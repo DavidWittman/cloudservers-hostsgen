@@ -32,6 +32,16 @@ except ImportError, e:
     raise SystemExit(1)
 
 class CloudServersClient(httplib2.Http):
+    """Client for interfacing with the Rackspace Cloud Servers API
+
+    Args:
+        user: String containing the Rackspace Cloud username
+        apikey: String containing Rackspace Cloud API Key
+
+    >>> cs = CloudServersClient('user','acbd18db4cc2f85cedef654fccc4a4d8')
+    
+    """
+
     API_URL = 'https://auth.api.rackspacecloud.com/v1.0'
     
     def __init__(self, user, apikey):
@@ -42,6 +52,8 @@ class CloudServersClient(httplib2.Http):
         self.mgmt_url = None
 
     def authenticate(self):
+        """Authenticate with the Rackspace Cloud API"""
+
         headers = { 'X-Auth-User': self.API_USER,
                     'X-Auth-Key': self.API_KEY }
 
@@ -50,7 +62,16 @@ class CloudServersClient(httplib2.Http):
         self.mgmt_url = resp['x-server-management-url']
         self.auth_token = resp['x-auth-token']
         
-    def getServerList(self, **kwargs):
+    def get_server_list(self, **kwargs):
+        """Gets a list of servers on the account
+
+        Args:
+            kwargs: A dictionary of headers to pass with the API request
+        Returns:
+            A dictionary containing the server name and private IP
+
+        """
+
         servers = {}
         (resp, body) = self._cs_request('/servers/detail', 'GET', **kwargs)
         if body:
@@ -90,19 +111,34 @@ class CloudServersClient(httplib2.Http):
 
         return resp, content
 
-def writeNewHosts(servers):
+def write_new_hosts(servers):
+    """Writes new Cloud Servers to the hosts file.
     
-    def getLocalIp(interface):
-	""" 
-		Retrieve IP address from an interface in Linux
-		Adopted from http://goo.gl/otHJG
-	"""
-	s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-	return socket.inet_ntoa(fcntl.ioctl(
-		s.fileno(),
-		0x8915,	# SIOCGIFADDR
-		struct.pack('256s', interface[:15])
-	)[20:24])
+    Args:
+        servers: A dictionary of the servers (key) and 
+            their IP address (value).
+
+    >>> write_new_hosts({'web01':'10.180.1.42'})
+    
+    """
+
+    def get_local_ip(interface):
+        """Retrieves IP address from an interface in Linux
+        Adopted from http://goo.gl/otHJG
+
+        Args:
+            interface: String representing the local interface
+                to get the IP address for.
+        Returns:
+            The IP address of interface
+
+        """
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        return socket.inet_ntoa(fcntl.ioctl(
+            s.fileno(),
+            0x8915,	# SIOCGIFADDR
+            struct.pack('256s', interface[:15])
+        )[20:24])
 
     sys.stdout.write("Writing new entries to hosts file... ")
     try:
@@ -110,7 +146,7 @@ def writeNewHosts(servers):
         hosts = hf.read()
         # Make sure we don't add an entry for this server
         try:
-            hosts += getLocalIp('eth1')
+            hosts += get_local_ip('eth1')
         except:
             print "[Error] Unable to retrieve local IP address for eth1."
 	    	
@@ -124,7 +160,8 @@ def writeNewHosts(servers):
     except IOError, e:
         print e
 
-def isRoot():
+def is_root():
+    """Make sure the script is running as root"""
     if os.geteuid() != 0:
         print "Y U NO ROOT?"
         raise SystemExit(1)
@@ -136,9 +173,9 @@ if __name__ == '__main__':
     if len(sys.argv) < 2 or len(sys.argv[2]) != 32:
         usage()
         raise SystemExit(1)
-    isRoot()
+    is_root()
 
     cs = CloudServersClient(sys.argv[1], sys.argv[2])
     print "Generating new server list for %s..." % sys.argv[1]
-    servers = cs.getServerList()
-    writeNewHosts(servers)
+    servers = cs.get_server_list()
+    write_new_hosts(servers)
