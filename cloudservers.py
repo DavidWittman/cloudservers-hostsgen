@@ -59,8 +59,9 @@ class Client(httplib2.Http):
         (resp, body) = self._cs_request('/servers/detail', 'GET', **kwargs)
         if body:
             body = json.loads(body)
-            for server in body['servers']:
-                servers[server['name']] = server['addresses']['private'][0]
+            serverlist = [(s['name'], s['addresses']) for s in body['servers']]
+            for (name, addr) in serverlist:
+                servers.setdefault(name, addr)
         else:
             servers = None
 
