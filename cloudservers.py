@@ -14,6 +14,9 @@ except ImportError, e:
     print "[Error] This script requires the package python-httplib2."
     raise SystemExit(1)
 
+class ApiError(Exception):
+    pass
+
 class Client(httplib2.Http):
     """Client for interfacing with the Rackspace Cloud Servers API
 
@@ -69,7 +72,11 @@ class Client(httplib2.Http):
 
     def _cs_request(self, url, method, **kwargs):
         if not self.mgmt_url:
-            self.authenticate()
+            try:
+                self.authenticate()
+            except ApiError:
+                print "[Error] Error authenticating with Rackspace Cloud API"
+                raise SystemExit(1)
 
         try:
             kwargs.setdefault('headers', {})['X-Auth-Token'] = self.auth_token
@@ -86,11 +93,11 @@ class Client(httplib2.Http):
     def request(self, *args, **kwargs):
         kwargs.setdefault('headers', {})
         (resp, content) = super(Client, self).request(*args, **kwargs)
+        if resp.status in (400, 401, 403, 404, 413, 500):
+            raise ApiError
         if content:
             json.loads(content)
         else:
             content = None
-        if resp.status in (400, 401, 403, 404, 413, 500):
-            raise Exception
 
         return resp, content
