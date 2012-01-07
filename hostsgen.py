@@ -20,7 +20,13 @@ from optparse import OptionParser
 
 import cloudservers
 
-def write_new_hosts(servers, opts):
+def parse_hosts(servers, public=False):
+    """Generates /etc/hosts format from API output"""
+
+    ip_type = public is True and "public" or "private"
+    return [(k, v[ip_type][0]) for (k,v) in servers.items()]
+
+def write_new_hosts(servers):
     """Writes new Cloud Servers to the hosts file.
     
     Args:
@@ -28,9 +34,9 @@ def write_new_hosts(servers, opts):
             their IP address (value).
 
     >>> write_new_hosts({'web01':'10.180.1.42'})
-    
     """
-    sys.stdout.write("Writing new entries to hosts file... ")
+
+    sys.stdout.write("Writing new entries to /etc/hosts... ")
     try:
         hf = open('/etc/hosts', 'r+')
         hosts = hf.read()
@@ -40,8 +46,6 @@ def write_new_hosts(servers, opts):
         except:
             sys.stderr.write("[Warning] Unable to retrieve local IP address for eth1\n")
 	    
-        ip_type = opts.public is True and "public" or "private"
-        servers = [(k, v[ip_type][0]) for (k,v) in servers.items()]
         hf.write('\n')
         for (name, ip) in servers:
             if ip in hosts:
@@ -83,7 +87,7 @@ def check_args(opts, args):
         pass
 
     try:
-        if not is_root():
+        if not is_root() and not opts.stdout:
             raise ArgumentError('Y U NO ROOT?')
         elif len(args) is not 2:
             raise ArgumentError('Missing arguments')
@@ -104,6 +108,11 @@ def parse_args():
         dest = "public",
         help = "Use Public IP addresses",
         default = False )
+    parser.add_option("-s", "--stdout",
+        action = "store_true",
+        dest = "stdout",
+        help = "Output to stdout",
+        default = False )
 
     (opts, args) = parser.parse_args()
     return check_args(opts, args)
@@ -111,9 +120,14 @@ def parse_args():
 def main():
     (opts, args) = parse_args()
     cs = cloudservers.Client(args[0], args[1])
-    print "Generating new server list for %s..." % args[0]
     servers = cs.get_server_list()
-    write_new_hosts(servers, opts)
+    servers = parse_hosts(servers, opts.public)
+
+    if opts.stdout:
+        for (name, ip) in servers:
+            print "%s\t%s" % (ip, name)
+    else:
+        write_new_hosts(servers)
 
 if __name__ == '__main__':
     main()
