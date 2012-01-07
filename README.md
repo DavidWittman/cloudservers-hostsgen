@@ -11,12 +11,14 @@ Auto-generate /etc/hosts entries for Rackspace Cloud Servers
 Options:
   -h, --help    show this help message and exit
   -p, --public  Use Public IP addresses
+  -s, --stdout  Output to stdout
 ```
 
 ### Example
+Add servers to /etc/hosts
+
 ```
 $ sudo python hostsgen.py example_user 1baabb5ca739bedead7d3beef3c8aa3a
-Generating new server list for example_user...
 Writing new entries to hosts file... Done!
 $ cat /etc/hosts
 127.0.0.1  localhost
@@ -26,3 +28,11 @@ $ cat /etc/hosts
 10.182.1.3	example-03
 ```
 
+Print server list to stdout
+
+```
+$ python hostsgen.py -s example_user 1baabb5ca739bedead7d3beef3c8aa3a
+10.180.1.1      example-01
+10.180.1.2      example-02
+10.182.1.3      example-03
+```
