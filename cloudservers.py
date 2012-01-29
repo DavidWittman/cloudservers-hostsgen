@@ -28,12 +28,11 @@ class Client(httplib2.Http):
     
     """
 
-    API_URL = 'https://auth.api.rackspacecloud.com/v1.0'
-    
-    def __init__(self, user, apikey):
+    def __init__(self, user, apikey, auth_url="https://auth.api.rackspacecloud.com/v1.0"):
         super(Client, self).__init__()
         self.API_USER = user
         self.API_KEY = apikey
+        self.API_URL = auth_url
         self.auth_token = None
         self.mgmt_url = None
 

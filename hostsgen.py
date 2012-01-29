@@ -2,7 +2,6 @@
 """
 CloudServers /etc/hosts Generator
 Author: David Wittman <david@wittman.com>
-Date: Oct 11, 2011
 	
 Auto-populates the system's hosts file with private IP addresses
 of Rackspace Cloud Servers on the account specified by the arguments
@@ -103,6 +102,11 @@ def parse_args():
     parser = OptionParser(usage = u,
         description = "Auto-generate /etc/hosts entries for Rackspace Cloud "
             + "Servers" )
+    parser.add_option("-k", "--uk",
+        action = "store_true",
+        dest = "uk",
+        help = "Use London Auth URL (UK accounts only)",
+        default = False )
     parser.add_option("-p", "--public",
         action = "store_true",
         dest = "public",
@@ -119,7 +123,9 @@ def parse_args():
 
 def main():
     (opts, args) = parse_args()
-    cs = cloudservers.Client(args[0], args[1])
+    auth_url = opts.uk and "https://lon.auth.api.rackspacecloud.com/v1.0" \
+                       or "https://auth.api.rackspacecloud.com/v1.0"
+    cs = cloudservers.Client(args[0], args[1], auth_url)
     servers = cs.get_server_list()
     servers = parse_hosts(servers, opts.public)
 

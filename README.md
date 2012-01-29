@@ -10,6 +10,7 @@ Auto-generate /etc/hosts entries for Rackspace Cloud Servers
 
 Options:
   -h, --help    show this help message and exit
+  -k, --uk      Use London Auth URL (UK accounts only)
   -p, --public  Use Public IP addresses
   -s, --stdout  Output to stdout
 ```
