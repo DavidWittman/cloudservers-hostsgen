@@ -100,3 +100,5 @@ class Client(httplib2.Http):
             content = None
 
         return resp, content
+
+# vim: set expandtab ts=4 sw=4 sts=4:
