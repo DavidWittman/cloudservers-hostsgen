@@ -2,9 +2,16 @@
 
 Auto-populates your /etc/hosts file with the IP addresses (private or public) of Rackspace Cloud Servers on the account specified by the arguments `username` and `apikey`.
 
-### Usage
+### Installation
+
 ```
-Usage: hostsgen.py [options] <username> <apikey>
+$ sudo pip install git+git://github.com/DavidWittman/cloudservers-hostsgen.git
+```
+
+### Usage
+
+```
+Usage: cloudservers-hostsgen [options] <username> <apikey>
 
 Auto-generate /etc/hosts entries for Rackspace Cloud Servers
 
@@ -15,11 +22,11 @@ Options:
   -s, --stdout  Output to stdout
 ```
 
-### Example
+### Examples
 Add servers to /etc/hosts
 
 ```
-$ sudo python hostsgen.py example_user 1baabb5ca739bedead7d3beef3c8aa3a
+$ sudo cloudservers-hostsgen example_user 1baabb5ca739bedead7d3beef3c8aa3a
 Writing new entries to hosts file... Done!
 $ cat /etc/hosts
 127.0.0.1  localhost
@@ -32,7 +39,7 @@ $ cat /etc/hosts
 Print server list to stdout
 
 ```
-$ python hostsgen.py -s example_user 1baabb5ca739bedead7d3beef3c8aa3a
+$ cloudservers-hostsgen -s example_user 1baabb5ca739bedead7d3beef3c8aa3a
 10.180.1.1      example-01
 10.180.1.2      example-02
 10.182.1.3      example-03
