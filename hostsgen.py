@@ -42,27 +42,6 @@ def write_new_hosts(servers):
     >>> write_new_hosts([('web01','10.180.1.42')])
 
     """
-
-    sys.stdout.write("Writing new entries to /etc/hosts... ")
-    try:
-        hf = open('/etc/hosts', 'r+')
-        hosts = hf.read()
-        # Make sure we don't add an entry for this server
-        try:
-            hosts += get_local_ip('eth1')
-        except:
-            sys.stderr.write("[Warning] Unable to retrieve local IP address for eth1\n")
-
-        hf.write('\n')
-        for (name, ip) in servers:
-            if ip in hosts:
-                continue
-            hf.write(ip + '\t' + name + '\n')
-        hf.close()
-        print "Done!"
-    except IOError, e:
-        print e
-
     def get_local_ip(interface):
         """Retrieves IP address from an interface in Linux
         Adopted from http://goo.gl/otHJG
@@ -78,6 +57,23 @@ def write_new_hosts(servers):
             0x8915, # SIOCGIFADDR
             struct.pack('256s', interface[:15])
         )[20:24])
+
+    print "Writing new entries to /etc/hosts... ",
+    with open('/etc/hosts', 'r+') as hf:
+        hosts = hf.read()
+        # Make sure we don't add an entry for this server
+        try:
+            hosts += get_local_ip('eth1')
+        except socket.error:
+            sys.stderr.write("[Warning] Unable to retrieve local IP address for eth1\n")
+
+        hf.write('\n')
+        for (name, ip) in servers:
+            if ip in hosts:
+                continue
+            hf.write(ip + '\t' + name + '\n')
+        hf.close()
+        print "Done!"
 
 def is_root():
     """Make sure the script is running as root
