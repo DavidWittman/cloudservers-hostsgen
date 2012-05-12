@@ -2,37 +2,45 @@
 """
 CloudServers /etc/hosts Generator
 Author: David Wittman <david@wittman.com>
-	
-Auto-populates the system's hosts file with private IP addresses
-of Rackspace Cloud Servers on the account specified by the arguments
-<user> and <apikey>. Much of the API connection code has been reused 
-from the existing Python CloudServers API.
+
+Auto-populates the system's hosts file with IP addresses of Rackspace
+Cloud Servers on the account specified by the arguments <user> and
+<apikey>. Uses the python-novaclient bindings for API interaction.
 
 """
 
 import fcntl
 import os
-import sys
 import socket
 import struct
+import sys
 from optparse import OptionParser
 
 import novaclient.v1_0.client as nova
 
 def parse_hosts(servers, public=False):
-    """Generates /etc/hosts format from API output"""
+    """Generates /etc/hosts format from API output
+
+    :param servers: Cloud Server objects returned from novaclient.
+    :type servers: A list of Cloud Server objects.
+    :param public: Use public IP address (default=False).
+    :type public: bool.
+    :returns: A generator containing tuples of hostname and IP
+              address mappings.
+
+    """
 
     ip_type = public is True and "public_ip" or "private_ip"
     return ((s.name, getattr(s, ip_type)[0]) for s in servers)
 
 def write_new_hosts(servers):
-    """Writes new Cloud Servers to the hosts file.
-    
-    Args:
-        servers: A dictionary of the servers (key) and 
-            their IP address (value).
+    """Writes new Cloud Servers to /etc/hosts
 
-    >>> write_new_hosts({'web01':'10.180.1.42'})
+    :param servers: The list of server names and IP addresses.
+    :type servers: A list of tuples.
+
+    >>> write_new_hosts([('web01','10.180.1.42')])
+
     """
 
     sys.stdout.write("Writing new entries to /etc/hosts... ")
@@ -44,7 +52,7 @@ def write_new_hosts(servers):
             hosts += get_local_ip('eth1')
         except:
             sys.stderr.write("[Warning] Unable to retrieve local IP address for eth1\n")
-	    
+
         hf.write('\n')
         for (name, ip) in servers:
             if ip in hosts:
@@ -59,11 +67,10 @@ def write_new_hosts(servers):
         """Retrieves IP address from an interface in Linux
         Adopted from http://goo.gl/otHJG
 
-        Args:
-            interface: String representing the local interface
-                to get the IP address for.
-        Returns:
-            The IP address of interface
+        :param interface: The local interface to get the IP for
+        :type interface: str.
+        :returns: str -- The IP address of the interface.
+
         """
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         return socket.inet_ntoa(fcntl.ioctl(
@@ -73,7 +80,11 @@ def write_new_hosts(servers):
         )[20:24])
 
 def is_root():
-    """Make sure the script is running as root"""
+    """Make sure the script is running as root
+
+    :returns: bool.
+
+    """
     if os.geteuid() != 0:
         return False
     return True
