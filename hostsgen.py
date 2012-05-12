@@ -17,13 +17,13 @@ import socket
 import struct
 from optparse import OptionParser
 
-import cloudservers
+import novaclient.v1_0.client as nova
 
 def parse_hosts(servers, public=False):
     """Generates /etc/hosts format from API output"""
 
-    ip_type = public is True and "public" or "private"
-    return [(k, v[ip_type][0]) for (k,v) in servers.items()]
+    ip_type = public is True and "public_ip" or "private_ip"
+    return ((s.name, getattr(s, ip_type)[0]) for s in servers)
 
 def write_new_hosts(servers):
     """Writes new Cloud Servers to the hosts file.
@@ -125,9 +125,8 @@ def main():
     (opts, args) = parse_args()
     auth_url = opts.uk and "https://lon.auth.api.rackspacecloud.com/v1.0" \
                        or "https://auth.api.rackspacecloud.com/v1.0"
-    cs = cloudservers.Client(args[0], args[1], auth_url)
-    servers = cs.get_server_list()
-    servers = parse_hosts(servers, opts.public)
+    api = nova.Client(args[0], args[1], None, auth_url)
+    servers = parse_hosts(api.servers.list(), opts.public)
 
     if opts.stdout:
         for (name, ip) in servers:
