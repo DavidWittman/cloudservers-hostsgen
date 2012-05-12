@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 __author__ = "David Wittman <david@wittman.com>"
 NAME = "cloudservers-hostsgen"
 DESC = "Auto-generates /etc/hosts for Rackspace Cloud Servers"
-VERSION = "0.1"
+VERSION = "1.0"
 REQS = [ 'python-novaclient==2.6.0' ]
 
 setup(name = NAME,
