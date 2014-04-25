@@ -14,7 +14,7 @@ import os
 import socket
 import struct
 import sys
-from optparse import OptionParser
+from argparse import ArgumentParser
 
 import novaclient.v1_0.client as nova
 
@@ -92,54 +92,49 @@ def is_root():
 def usage():
     print "Usage:\t%s <user> <apikey>" % sys.argv[0]
 
-def check_args(opts, args):
+def check_args(args):
     class ArgumentError(Exception):
         pass
 
-    try:
-        if not is_root() and not opts.stdout:
-            raise ArgumentError('Y U NO ROOT?')
-        elif len(args) is not 2:
-            raise ArgumentError('Missing arguments')
-        elif len(args[1]) is not 32:
-            raise ArgumentError('Invalid API Key')
-    except ArgumentError, e:
-        sys.stderr.write("[Error] " + str(e) + "\n")
-        raise SystemExit(1)
-    return (opts, args)
+    if not is_root() and not args.stdout:
+        raise ArgumentError('This script must be run as root, or with the -s '\
+                            'flag to output to stdout')
+    elif len(args.api_key) is not 32:
+        raise ArgumentError('Invalid API Key')
+
+    return args
 
 def parse_args():
-    u = "%prog [options] <username> <apikey>"
-    parser = OptionParser(usage = u,
-        description = "Auto-generate /etc/hosts entries for Rackspace Cloud "
-            + "Servers" )
-    parser.add_option("-k", "--uk",
+    description = "Auto-generate /etc/hosts entries for Rackspace Cloud Servers"
+    parser = ArgumentParser(description=description)
+    parser.add_argument("-k", "--uk",
         action = "store_true",
         dest = "uk",
         help = "Use London Auth URL (UK accounts only)",
         default = False )
-    parser.add_option("-p", "--public",
+    parser.add_argument("-p", "--public",
         action = "store_true",
         dest = "public",
         help = "Use Public IP addresses",
         default = False )
-    parser.add_option("-s", "--stdout",
+    parser.add_argument("-s", "--stdout",
         action = "store_true",
         dest = "stdout",
         help = "Output to stdout",
         default = False )
+    parser.add_argument("username", help="Rackspace Cloud Username")
+    parser.add_argument("api_key", help="Rackspace Cloud API Key")
 
-    (opts, args) = parser.parse_args()
-    return check_args(opts, args)
+    return check_args(parser.parse_args())
 
 def main():
-    (opts, args) = parse_args()
-    auth_url = opts.uk and "https://lon.auth.api.rackspacecloud.com/v1.0" \
+    args = parse_args()
+    auth_url = args.uk and "https://lon.auth.api.rackspacecloud.com/v1.0" \
                        or "https://auth.api.rackspacecloud.com/v1.0"
-    api = nova.Client(args[0], args[1], None, auth_url)
-    servers = parse_hosts(api.servers.list(), opts.public)
+    api = nova.Client(args.username, args.api_key, None, auth_url)
+    servers = parse_hosts(api.servers.list(), args.public)
 
-    if opts.stdout:
+    if args.stdout:
         for (name, ip) in servers:
             print "%s\t%s" % (ip, name)
     else:
